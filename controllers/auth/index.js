@@ -16,11 +16,10 @@ const generateToken = (user) => {
   return token;
 };
 const register = async (req, res) => {
-  console.log(req.body);
   const { username, password, email, phone, fullname } = req.body;
   try {
     const oldUser = await user.getUserByUsername(username);
-    if (oldUser[0]) {
+    if (oldUser.rows[0]) {
       res.status(401).send({
         message: "Username already exist",
       });
@@ -31,6 +30,7 @@ const register = async (req, res) => {
         ...req.body,
         password: hashPassword,
       });
+      console.log(newUser.id, "userid");
       const token = generateToken(newUser);
       res.status(200).send({
         token,
@@ -43,13 +43,17 @@ const register = async (req, res) => {
   }
 };
 const login = async (req, res) => {
-  const { username, password } = res.body;
+  const { username, password } = req.body;
   try {
     const oldUser = await user.getUserByUsername(username);
-    if (oldUser[0]) {
-      const checkPassword = await bcrypt.compare(password, oldUser.password);
+    if (oldUser.rows[0]) {
+      const data = oldUser.rows[0];
+      const checkPassword = await bcrypt.compare(
+        password,
+        oldUser.rows[0].password
+      );
       if (checkPassword) {
-        const token = generateToken(oldUser[0]);
+        const token = generateToken(data);
         res.status(200).send({
           token,
         });
